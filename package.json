@@ -5,12 +5,14 @@
   "main": "main.js",
   "scripts": {
     "start": "node src/main.js",
+    "seed": "node src/db/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "pokemon-demo": "file:",
     "sequelize": "^6.37.3",
     "sqlite3": "^5.1.7"
   }
