@@ -1,75 +1,37 @@
 const { db } = require("./db/connection")
-const { Pokemon } = require("./models/Pokemon")
+const { Pokemon, Trainer, Badge } = require("./models")
 
 async function main() {
-  await db.sync({ force: true });
+  await db.sync({ force: false });
 
-  console.log("\n********** CREATE **********")
+  // for convenience in our demo, grab all the seeded data
+  const trainers = await Trainer.findAll();
+  const pokemon = await Pokemon.findAll();
+  const badges = await Badge.findAll();
 
-  const pikachu = await Pokemon.create({
-    name: "Pikachu",
-    type: "Electric",
-    weight: 13
-  })
+  console.log("********** ONE-TO-MANY **********");
+  await trainers[0].addPokemon(pokemon[0]); // id 1
+  await trainers[0].addPokemons([ pokemon[1], pokemon[2] ]); // id 2, 3
+  await trainers[1].addPokemon(4)
+  await trainers[1].addPokemons([5, 6, 7]);
 
-  console.log("Pikachu:", JSON.stringify(pikachu, null, 2));
+  // let's look at this trainer
+  const red = await Trainer.findByPk(1);
+  console.log("red trainer:", JSON.stringify(red, null, 2))
+  const redPokemon = await red.getPokemons();
+  console.log("redPokemon:", JSON.stringify(redPokemon, null, 2))
 
-  await Pokemon.bulkCreate([
-    {
-      name: "Bulbasaur",
-      type: "Grass/Poison",
-      weight: 16,
-    },
-    {
-      name: "Charmander",
-      type: "Fire",
-      weight: 18,
-    },
-    {
-      name: "Squirtle",
-      type: "Water",
-      weight: 23,
-    },
-  ]);
+  // let's look at the other trainer
+  // use eager loading this time
+  const blue = await Trainer.findByPk(2, {include: Pokemon})
+  console.log("blue trainer:", JSON.stringify(blue, null, 2))
 
-  console.log("\n********** READ **********");
-  const allPokemon = await Pokemon.findAll();
-  console.log("allPokemon:", JSON.stringify(allPokemon, null, 2))
+  console.log("********** MANY-TO-MANY **********");
+  await red.addBadge(badges[0]); // id: 1
+  await blue.addBadges([1, 2, 3]);
+  const trainersWithBadges = await Trainer.findAll({ include: [Badge, Pokemon]})
+  console.log("trainersWithBadges:", JSON.stringify(trainersWithBadges, null, 2))
 
-  const bulbasaur = await Pokemon.findByPk(2);
-  console.log("bulbasaur:", JSON.stringify(bulbasaur, null, 2))
-
-  const waterPokemon = await Pokemon.findAll(
-    {
-        where: {
-           type: "Water" 
-        }
-    }
-  );
-  console.log("waterPokemon =", JSON.stringify(waterPokemon, null, 2))
-
-  const firstWaterPokemon = await Pokemon.findOne(
-    {
-        where: {
-           type: "Water" 
-        }
-    }
-  );
-  console.log("firstWaterPokemon =", JSON.stringify(firstWaterPokemon, null, 2))
-
-  console.log("\n********** UPDATE **********")
-  const updatedPokemon = await bulbasaur.update({
-    name: "Ivysaur",
-    weight: 31
-  })
-  console.log("updateResult=", JSON.stringify(updatedPokemon, null, 2));
-
-  console.log("\n********** DELETE **********")
-  const charmander = await Pokemon.findOne({
-    where: {name: "Charmander"}
-  });
-  const deletedPokemon = await charmander.destroy();
-  console.log("deletedPokemon=", JSON.stringify(deletedPokemon, null, 2))
 }
 
 main();
