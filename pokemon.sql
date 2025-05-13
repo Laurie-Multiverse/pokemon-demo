@@ -95,3 +95,4 @@ FROM pokemon
 INNER JOIN decks
 ON pokemon.deck_id=decks.id;
 
+.tables
