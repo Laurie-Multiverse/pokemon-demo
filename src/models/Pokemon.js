@@ -8,7 +8,7 @@ Pokemon.init({
     weight: DataTypes.DECIMAL(10, 2)
 }, {
     sequelize: db,
-    modelName: "Pokemon",
+    modelName: "pokemon",
     timestamps: false,
 })
 

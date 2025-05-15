@@ -1,76 +1,39 @@
 const { db } = require("./db/connection")
-const Pokemon = require("./models/Pokemon")
+const { Pokemon, Trainer, Badge } = require("./models")
 
 async function main() {
-    await db.sync({ force: true })
+    const trainers = await Trainer.findAll();
+    const badges = await Badge.findAll();
+    const pokemon = await Pokemon.findAll();
 
-    // CRUD
-    // CREATE
-    const pikachu = {
-        name: "Pikachu",
-        type: "Electric",
-        weight: 6
-    };
-    const pokemon1 = await Pokemon.create(pikachu);
-    // console.log(JSON.stringify(pokemon1, null, 2));
-    await Pokemon.bulkCreate([
-        {
-            name: "Bulbasaur",
-            type: "Grass/Poison",
-            weight: 6.9,
-        },
-        {
-            name: "Charmander",
-            type: "Fire",
-            weight: 8.5,
-        },
-        {
-            name: "Squirtle",
-            type: "Water",
-            weight: 9,
-        },
-    ])
+    // Trainer collects Pokemon
+    await trainers[0].addPokemon(pokemon[0])
+    await trainers[0].addPokemon([pokemon[1], pokemon[2]])
+    // console.log(JSON.stringify(trainers[0], null, 2))
 
-    // READ (R in CRUD)
-    const allPokemon = await Pokemon.findAll();
-    // console.log(JSON.stringify(allPokemon, null, 2))
+    // Lazy loading of a trainer and subsequently getting pokemon
+    let redTrainer = await Trainer.findByPk(1);
+    // console.log(JSON.stringify(redTrainer, null, 2))
+    const lazyPokemons = await redTrainer.getPokemons();
+    // console.log(JSON.stringify(lazyPokemons, null, 2))
 
-    const pokemon3 = await Pokemon.findByPk(3);
-    // console.log(JSON.stringify(pokemon3, null, 2))
-
-    const bulbasaur = await Pokemon.findOne({
-        where: {
-            name: 'Bulbasaur'
-        }
+    // Eager loading of a trainer with Pokemon
+    redTrainer = await Trainer.findByPk(1, {
+        include: Pokemon
     });
-    // console.log(JSON.stringify(bulbasaur, null, 2))
+    console.log(JSON.stringify(redTrainer, null, 2))
 
-    // UPDATE (U in CRUD)
-    // method 1: Class method
-    await Pokemon.update({
-        weight: 20
-    }, {
-        where: {
-            name: 'Pikachu'
-        }
+    // trainers earn badges
+    await trainers[0].addBadge(badges[0]);
+    await trainers[1].addBadges([badges[0], badges[1], badges[2]]);
+    const trainersWithBadges = await Trainer.findAll({
+        include: Badge
     })
+    console.log(JSON.stringify(trainersWithBadges, null, 2))
 
-    // method 2: instance method
-    const ivysaur = await bulbasaur.update({
-        name: 'Ivysaur',
-        weight: 31
-    });
-    // console.log(JSON.stringify(ivysaur, null, 2))
-
-    // DELETE (D in CRUD)
-    // method 1: class method
-    await Pokemon.destroy({
-        where: { id: 4 }
-    })
-
-    // method 2: instance method
-    const destroyedIvysaur = await ivysaur.destroy();
-    console.log(JSON.stringify(destroyedIvysaur, null, 2))
+    // badges are earned by trainers
+    const blueTrainerBadges = await trainers[1].getBadges();
+    console.log(JSON.stringify(blueTrainerBadges, null, 2))
 }
 
 main();
